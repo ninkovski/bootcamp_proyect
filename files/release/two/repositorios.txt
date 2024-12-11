@@ -1,0 +1,34 @@
+Github repositorios 
+
+https://github.com/ninkovski/bootcamp-config-repo           (main)
+https://github.com/ninkovski/bootcamp-config-server         (master)
+https://github.com/ninkovski/bootcamp-zuul-server.git       (master)
+https://github.com/ninkovski/bootcamp-eureka-server.git     (master)
+https://github.com/ninkovski/bootcamp-customer-service      (release/two)
+https://github.com/ninkovski/bootcamp-product-type-service  (release/two)
+https://github.com/ninkovski/bootcamp-bank-product-service  (release/two)
+https://github.com/ninkovski/bootcamp-oauth-service.git     (release/two)
+
+Para levantar el proyecto, es necesario realizar las siguientes acciones:
+
+Levantar el entorno con Docker Compose: Debes ejecutar el archivo docker-compose.yml para levantar los servicios necesarios para el proyecto. Esto incluye el servidor de Eureka, la base de datos MongoDB, y los microservicios.
+
+Crear la base de datos en MongoDB: Es imprescindible crear la base de datos en MongoDB antes de iniciar los servicios. Asegúrate de que la base de datos esté correctamente configurada.
+
+Verificar el servidor Eureka: Asegúrate de que el servidor Eureka esté corriendo correctamente. Puedes verificarlo accediendo a su URL (por lo general, http://localhost:8761) para ver el estado de los servicios registrados.
+
+Configurar la red interna de Docker: Asegúrate de que los servicios en el Docker Compose estén apuntando a la red interna correcta (microservices-network). Si no se configura correctamente, los contenedores no podrán comunicarse entre sí.
+
+Implementación en ambientes libres
+Si se desea implementar en un entorno de nube o en un ambiente distribuido, se pueden crear clusters basados en los contenedores descritos en el diagrama UML. Los clusters deberían estar configurados de la siguiente manera:
+
+Clusters aislados: Los clusters solo deberían poder comunicarse con el cluster adyacente al que están conectados. Esto asegura que cada conjunto de microservicios opere de manera independiente, pero puedan intercambiar información cuando sea necesario.
+Explicación del Diagrama
+OAuth expuesto a Internet: El servicio OAuth debería estar accesible desde Internet para autenticar y autorizar a los usuarios. Este servicio maneja la validación del token y garantiza la seguridad en las peticiones.
+
+Zuul como API Gateway: El servidor Zuul debe actuar como un gateway para las peticiones entrantes. Este servidor monitorea el tráfico, enrutando las solicitudes a los microservicios correspondientes y validando el token de acceso (Bearer Token) antes de permitir el acceso.
+
+Escalabilidad: Los microservicios deben estar listos para manejar tráfico. A través de Zuul y la capa de seguridad que proporciona, los microservicios se pueden escalar según la demanda.
+
+Con esta arquitectura, los microservicios estarán asegurados y escalables, con un control centralizado de las peticiones gracias a Zuul y OAuth.
+

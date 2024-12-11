@@ -1,0 +1,15 @@
+Github repositorios 
+
+https://github.com/ninkovski/bootcamp-config-repo               (main)
+https://github.com/ninkovski/bootcamp-config-server             (master)
+https://github.com/ninkovski/bootcamp-customer-service          (release/one)
+https://github.com/ninkovski/bootcamp-product-type-service      (release/one)
+https://github.com/ninkovski/bootcamp-bank-product-service      (release/one)
+
+Importante para levantar el proyecto:
+
+Es necesario tener MongoDB instalado en tu entorno. Además, se deben realizar las siguientes configuraciones:
+
+Configurar la conexión: Asegúrate de que la conexión con MongoDB esté correctamente configurada en los servicios del proyecto. Esto incluye definir la URL de conexión, el nombre de la base de datos y las credenciales de acceso.
+
+Crear los usuarios: Es necesario crear los usuarios con los permisos adecuados en MongoDB. Estos usuarios serán utilizados para acceder a las bases de datos que los microservicios requieren. Asegúrate de que los usuarios tengan permisos suficientes para interactuar con las bases de datos correspondientes.

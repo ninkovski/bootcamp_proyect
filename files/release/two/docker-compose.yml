@@ -1,0 +1,112 @@
+services:
+  # Servicio de MongoDB
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ninko
+      MONGO_INITDB_ROOT_PASSWORD: ninko
+      MONGO_INITDB_DATABASE: mongocamp
+    networks:
+      - microservices-network
+  # Config Server
+  config-server:
+    image: config-server  
+    container_name: config-server
+    ports:
+      - "9999:9999"
+    networks:
+      - microservices-network
+  # Eureka Server
+  eureka-server:
+    build:
+      context: ./SpringCloud-eurekaserver
+    ports:
+      - "8761:8761"
+    environment:
+      - eureka.client.registerWithEureka=false
+      - eureka.client.fetchRegistry=false
+      - eureka.server.enableSelfPreservation=false
+      - eureka.client.serviceUrl.default-zone=http://eureka-server:8761/eureka/
+    networks:
+      - microservices-network
+    depends_on:
+      - mongo  
+  
+  # Zuul Gateway
+  zuul-server:
+    build:
+      context: ./SpringCloud-zuul-server
+    ports:
+      - "8090:8090"
+    networks:
+      - microservices-network
+    depends_on:
+      - eureka-server
+
+  # Servicio OAuth
+  oauth-service:
+    build:
+      context: ./oauth
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+    depends_on:
+      - mongo
+    networks:
+      - microservices-network
+
+  # Servicio Customer
+  customer-service:
+    build:
+      context: ./bootcamp-customer-service
+    ports:
+      - "8010:8010"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: customer-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+  # Servicio Bank Product
+  bank-product-service:
+    build:
+      context: ./bootcamp-bank-product-service
+    ports:
+      - "8020:8020"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: bank-product-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+  # Servicio Product Type
+  product-type-service:
+    build:
+      context: ./bootcamp-product-type-service
+    ports:
+      - "8030:8030"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: product-type-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
