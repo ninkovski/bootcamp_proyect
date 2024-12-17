@@ -1,0 +1,194 @@
+services:
+  # Base de datos PostgreSQL para SonarQube
+  sonarqube-db:
+    image: postgres:latest
+    container_name: sonarqube-db
+    environment:
+      POSTGRES_USER: sonarqube
+      POSTGRES_PASSWORD: sonarqube
+      POSTGRES_DB: sonarqube
+    ports:
+      - "5432:5432"
+    networks:
+      - microservices-network
+
+  # SonarQube Server
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    depends_on:
+      - sonarqube-db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonarqube
+      SONAR_JDBC_PASSWORD: sonarqube
+    ports:
+      - "9000:9000"
+    networks:
+      - microservices-network
+  # Servicio de MongoDB
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ninko
+      MONGO_INITDB_ROOT_PASSWORD: ninko
+      MONGO_INITDB_DATABASE: mongocamp
+    networks:
+      - microservices-network
+  # Config Server
+  config-server:
+    image: config-server  
+    container_name: config-server
+    ports:
+      - "9999:9999"
+    networks:
+      - microservices-network
+  # Zookeeper (necesario para Kafka)
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - microservices-network
+
+  # Kafka
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 1
+    ports:
+      - "9093:9093"
+    depends_on:
+      - zookeeper
+    networks:
+      - microservices-network
+
+  # Confluent Control Center
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:latest
+    container_name: control-center
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      CONTROL_CENTER_ZOOKEEPER: zookeeper:2181
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_PARTITIONS: 1
+    ports:
+      - "9021:9021"
+    networks:
+      - microservices-network
+    depends_on:
+      - kafka
+      - zookeeper
+      
+  # Eureka Server
+  eureka-server:
+    build:
+      context: ./SpringCloud-eurekaserver
+    ports:
+      - "8761:8761"
+    environment:
+      - eureka.client.registerWithEureka=false
+      - eureka.client.fetchRegistry=false
+      - eureka.server.enableSelfPreservation=false
+      - eureka.client.serviceUrl.default-zone=http://eureka-server:8761/eureka/
+    networks:
+      - microservices-network
+    depends_on:
+      - mongo  
+  
+  # Zuul Gateway
+  zuul-server:
+    build:
+      context: ./SpringCloud-zuul-server
+    ports:
+      - "8090:8090"
+    networks:
+      - microservices-network
+    depends_on:
+      - eureka-server
+
+  # Servicio OAuth
+  oauth-service:
+    build:
+      context: ./oauth
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+    depends_on:
+      - mongo
+    networks:
+      - microservices-network
+
+  # Servicio Customer
+  customer-service:
+    build:
+      context: ./bootcamp-customer-service
+    ports:
+      - "8010:8010"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: customer-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+      KAFKA_BROKER: kafka:9093 
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+  # Servicio Bank Product
+  bank-product-service:
+    build:
+      context: ./bootcamp-bank-product-service
+    ports:
+      - "8020:8020"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: bank-product-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+      KAFKA_BROKER: kafka:9093 
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+  # Servicio Product Type
+  product-type-service:
+    build:
+      context: ./bootcamp-product-type-service
+    ports:
+      - "8030:8030"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      eureka.instance.hostname: product-type-service
+      eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
+      KAFKA_BROKER: kafka:9093 
+    depends_on:
+      - mongo
+      - eureka-server
+    networks:
+      - microservices-network
+
+  # Redis
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices-network
+      
+networks:
+  microservices-network:
+    driver: bridge
