@@ -26,22 +26,20 @@ services:
       - "9000:9000"
     networks:
       - microservices-network
+
   # Servicio de MongoDB
   mongo:
     image: mongo:latest
     container_name: mongo
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ninko
-      MONGO_INITDB_ROOT_PASSWORD: ninko
-      MONGO_INITDB_DATABASE: mongocamp
     networks:
       - microservices-network
+      
   # Config Server
   config-server:
-    image: config-server  
-    container_name: config-server
+    build:
+      context: ./bootcamp-config-server
     ports:
       - "9999:9999"
     networks:
@@ -92,7 +90,7 @@ services:
   # Eureka Server
   eureka-server:
     build:
-      context: ./SpringCloud-eurekaserver
+      context: ./bootcamp-eureka-server
     ports:
       - "8761:8761"
     environment:
@@ -108,7 +106,7 @@ services:
   # Zuul Gateway
   zuul-server:
     build:
-      context: ./SpringCloud-zuul-server
+      context: ./bootcamp-zuul-server
     ports:
       - "8090:8090"
     networks:
@@ -119,11 +117,11 @@ services:
   # Servicio OAuth
   oauth-service:
     build:
-      context: ./oauth
+      context: ./bootcamp-oauth-service
     ports:
       - "8000:8000"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongocamp
     depends_on:
       - mongo
     networks:
@@ -136,7 +134,7 @@ services:
     ports:
       - "8010:8010"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongocamp
       eureka.instance.hostname: customer-service
       eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
       KAFKA_BROKER: kafka:9093 
@@ -153,7 +151,7 @@ services:
     ports:
       - "8020:8020"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongocamp
       eureka.instance.hostname: bank-product-service
       eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
       KAFKA_BROKER: kafka:9093 
@@ -170,7 +168,7 @@ services:
     ports:
       - "8030:8030"
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://ninko:ninko@mongo:27017/mongocamp
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongocamp
       eureka.instance.hostname: product-type-service
       eureka.client.serviceUrl.defaultZone: http://eureka-server:8761/eureka/
       KAFKA_BROKER: kafka:9093 
